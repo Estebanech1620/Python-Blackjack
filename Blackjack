@@ -1,0 +1,97 @@
+import random
+
+class BlackjackGame:
+    def __init__(self):
+        self.deck = []
+        self.player_hand = []
+        self.dealer_hand = []
+        self.player_money = 500
+
+    def reset_deck(self):
+        self.deck = [{'rank': rank, 'suit': suit} for suit in suits for rank in ranks]
+
+    def deal_initial_hands(self):
+        self.reset_deck()
+        random.shuffle(self.deck)
+        self.player_hand = [self.deck.pop(), self.deck.pop()]
+        self.dealer_hand = [self.deck.pop(), self.deck.pop()]
+
+    def calculate_hand_value(self, hand):
+        value = sum(card_values[card['rank']] for card in hand)
+        num_aces = sum(1 for card in hand if card['rank'] == 'Ace')
+        while value > 21 and num_aces > 0:
+            value -= 10
+            num_aces -= 1
+        return value
+
+    def print_hand(self, hand):
+        for card in hand:
+            print(f"{card['rank']} of {card['suit']}")
+
+    def dealer_play(self):
+        dealer_score = self.calculate_hand_value(self.dealer_hand)
+        while dealer_score < 17:
+            new_card = self.deck.pop()
+            self.dealer_hand.append(new_card)
+            dealer_score = self.calculate_hand_value(self.dealer_hand)
+
+    def play(self):
+        while self.player_money > 0:
+            print(f"Your current money: ${self.player_money}")
+            bet = int(input("Place your bet: "))
+            
+            if bet > self.player_money:
+                print("You can't bet more than your current money.")
+                continue
+
+            self.deal_initial_hands()
+
+            print("Player's hand:")
+            self.print_hand(self.player_hand)
+            player_score = self.calculate_hand_value(self.player_hand)
+            print(f"Player's total: {player_score}")
+
+            action = input("\nDo you want to hit or stand? ").lower()
+            while action == 'hit':
+                new_card = self.deck.pop()
+                self.player_hand.append(new_card)
+                print(f"You drew the {new_card['rank']} of {new_card['suit']}")
+                player_score = self.calculate_hand_value(self.player_hand)
+                print(f"Player's total: {player_score}")
+                if player_score > 21:
+                    print("You busted! Dealer wins.")
+                    self.player_money -= bet
+                    break
+                action = input("\nDo you want to hit or stand? ").lower()
+
+            if action == 'stand':
+                self.dealer_play()
+                self.print_hand(self.dealer_hand)
+                dealer_score = self.calculate_hand_value(self.dealer_hand)
+                print(f"Dealer's total: {dealer_score}")
+                if dealer_score > 21 or player_score > dealer_score:
+                    print(f"You win! You won ${bet}!")
+                    self.player_money += bet
+                elif dealer_score > player_score:
+                    print(f"Dealer wins. You lost ${bet}. Better luck next time!")
+                    self.player_money -= bet
+                else:
+                    print("It's a tie!")
+
+            if self.player_money >= 1000:
+                print("Oh, are you card counting? Keep up the good work!")
+            
+            play_again = input("Do you want to play again? (yes/no): ").lower()
+            if play_again != 'yes' and play_again != 'y':
+                break
+
+        if self.player_money <= 0:
+            print("You've run out of money. Better luck next time!")
+
+if __name__ == "__main__":
+    suits = ['Hearts', 'Diamonds', 'Clubs', 'Spades']
+    ranks = ['Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Jack', 'Queen', 'King', 'Ace']
+    card_values = {'Two': 2, 'Three': 3, 'Four': 4, 'Five': 5, 'Six': 6, 'Seven': 7, 'Eight': 8,
+                   'Nine': 9, 'Ten': 10, 'Jack': 10, 'Queen': 10, 'King': 10, 'Ace': 11}
+    game = BlackjackGame()
+    game.play()
